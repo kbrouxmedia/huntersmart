@@ -21,16 +21,15 @@ const STATUS_STYLES: Record<string, string> = {
   ARCHIVED: "bg-zinc-800 text-zinc-500",
 };
 
+const CITIES = ["Montreal", "Toronto", "Vancouver", "Calgary", "Miami", "New York", "Ciudad de México", "Madrid", "Barcelona", "Buenos Aires"];
+
 function ScoreBar({ score }: { score: number }) {
   const color = score >= 80 ? "bg-red-500" : score >= 50 ? "bg-yellow-500" : "bg-zinc-600";
   return (
     <div className="flex items-center gap-2">
       <span className="tabular text-sm font-semibold text-white w-7">{score}</span>
       <div className="w-16 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full score-bar ${color}`}
-          style={{ width: `${score}%` }}
-        />
+        <div className={`h-full rounded-full score-bar ${color}`} style={{ width: `${score}%` }} />
       </div>
     </div>
   );
@@ -41,10 +40,24 @@ function SkeletonRow() {
     <tr className="border-b border-zinc-800/50">
       {[140, 80, 80, 60, 60, 80, 60].map((w, i) => (
         <td key={i} className="px-4 py-3">
-          <div className={`skeleton h-4`} style={{ width: w }} />
+          <div className="skeleton h-4" style={{ width: w }} />
         </td>
       ))}
     </tr>
+  );
+}
+
+function SearchingOverlay({ city }: { city: string }) {
+  return (
+    <div className="rounded-xl border border-blue-500/30 bg-blue-500/5 p-6 flex items-center gap-4">
+      <div className="shrink-0 w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+      <div>
+        <p className="text-sm font-medium text-white">Analizando empresas en {city}…</p>
+        <p className="text-xs text-zinc-500 mt-0.5">
+          La IA está buscando empresas con deficiencias digitales. Esto puede tomar 15–30 segundos.
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -52,9 +65,11 @@ export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchingCity, setSearchingCity] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [auditingId, setAuditingId] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   useEffect(() => {
     const q = query(collection(db, "leads"), orderBy("created_at", "desc"));
@@ -69,31 +84,43 @@ export default function LeadsPage() {
 
   async function handleScout(e: React.FormEvent) {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim() || searchingCity) return;
     setError("");
-    const query = `Encuentra empresas con alto ingreso y deficiencias digitales evidentes en ${searchQuery}. Analiza todos los sectores de alto valor: construcción, manufactura, servicios profesionales, salud, logística, tecnología, retail B2B. Mínimo 50 empleados. Prioriza empresas con múltiples deficiencias digitales y alto potencial de modernización.`;
+    setSuccess("");
+    setSearchingCity(searchQuery);
+    const prompt = `Encuentra empresas con alto ingreso y deficiencias digitales evidentes en ${searchQuery}. Analiza todos los sectores de alto valor: construcción, manufactura, servicios profesionales, salud, logística, tecnología, retail B2B. Mínimo 50 empleados. Prioriza empresas con múltiples deficiencias digitales y alto potencial de modernización.`;
     try {
       const res = await fetch("/api/agents/agent14", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query: prompt }),
       });
       const data = await res.json();
-      if (!data.success) setError(data.error);
-      else setSearchQuery("");
+      if (!data.success) {
+        setError(data.error);
+      } else {
+        setSuccess(`${data.count} leads encontrados en ${searchQuery}`);
+        setSearchQuery("");
+        setTimeout(() => setSuccess(""), 5000);
+      }
     } catch {
-      setError("Error de conexión");
+      setError("Error de conexión con el servidor.");
+    } finally {
+      setSearchingCity("");
     }
   }
 
   async function handleAudit(lead: Lead) {
     setAuditingId(lead.id!);
+    setError("");
     try {
-      await fetch("/api/agents/agent15", {
+      const res = await fetch("/api/agents/agent15", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(lead),
       });
+      const data = await res.json();
+      if (!data.success) setError(data.error);
     } catch {
       setError("Error al auditar");
     } finally {
@@ -117,18 +144,20 @@ export default function LeadsPage() {
       <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5 space-y-4">
         <div>
           <p className="text-sm font-medium text-white">¿Dónde buscamos leads?</p>
-          <p className="text-xs text-zinc-500 mt-0.5">Escoge un lugar — la IA encuentra las empresas con deficiencias digitales automáticamente.</p>
+          <p className="text-xs text-zinc-500 mt-0.5">
+            Escoge un lugar — la IA encuentra las empresas con deficiencias digitales automáticamente.
+          </p>
         </div>
 
-        {/* Quick select cities */}
         <div className="flex flex-wrap gap-2">
-          {["Montreal", "Toronto", "Vancouver", "Calgary", "Miami", "New York", "Ciudad de México", "Madrid", "Barcelona", "Buenos Aires"].map((city) => (
+          {CITIES.map((city) => (
             <button
               key={city}
               type="button"
               onClick={() => setSearchQuery(city)}
+              disabled={!!searchingCity}
               aria-pressed={searchQuery === city}
-              className={`text-xs px-3 py-1.5 rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+              className={`text-xs px-3 py-1.5 rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-40 disabled:cursor-not-allowed ${
                 searchQuery === city
                   ? "bg-blue-600 border-blue-600 text-white"
                   : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-white bg-transparent"
@@ -139,11 +168,8 @@ export default function LeadsPage() {
           ))}
         </div>
 
-        {/* Custom location input + submit */}
         <form onSubmit={handleScout} className="flex gap-2" role="search">
-          <label htmlFor="scout-location" className="sr-only">
-            Ciudad o país
-          </label>
+          <label htmlFor="scout-location" className="sr-only">Ciudad o país</label>
           <input
             id="scout-location"
             type="text"
@@ -152,27 +178,34 @@ export default function LeadsPage() {
             spellCheck={false}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            disabled={!!searchingCity}
             placeholder="O escribe una ciudad o país…"
-            className="flex-1 min-w-0 bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-sm text-white placeholder-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent transition-colors"
+            className="flex-1 min-w-0 bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-sm text-white placeholder-zinc-500 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent transition-colors"
           />
           <button
             type="submit"
-            disabled={isPending || !searchQuery.trim()}
-            aria-busy={isPending}
+            disabled={!!searchingCity || !searchQuery.trim()}
+            aria-busy={!!searchingCity}
             className="shrink-0 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
-            {isPending ? "Buscando…" : "Buscar →"}
+            {searchingCity ? "Buscando…" : "Buscar →"}
           </button>
         </form>
       </div>
 
+      {/* Loading overlay */}
+      {searchingCity && <SearchingOverlay city={searchingCity} />}
+
+      {/* Success */}
+      {success && (
+        <div role="status" aria-live="polite" className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg px-4 py-3 text-sm text-emerald-400">
+          ✓ {success}
+        </div>
+      )}
+
       {/* Error */}
       {error && (
-        <div
-          role="alert"
-          aria-live="polite"
-          className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-sm text-red-400"
-        >
+        <div role="alert" aria-live="polite" className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-sm text-red-400">
           {error}
         </div>
       )}
@@ -197,7 +230,7 @@ export default function LeadsPage() {
             ) : leads.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-16 text-center text-zinc-500 text-sm">
-                  No hay leads todavía. Usa el buscador para encontrar empresas.
+                  No hay leads todavía. Escoge una ciudad para comenzar.
                 </td>
               </tr>
             ) : (
@@ -209,9 +242,7 @@ export default function LeadsPage() {
                   </td>
                   <td className="px-4 py-3 text-zinc-300 truncate max-w-[120px]">{lead.industry}</td>
                   <td className="px-4 py-3 text-zinc-300 hidden md:table-cell">{lead.location}</td>
-                  <td className="px-4 py-3">
-                    <ScoreBar score={lead.opportunity_score} />
-                  </td>
+                  <td className="px-4 py-3"><ScoreBar score={lead.opportunity_score} /></td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${PRIORITY_STYLES[lead.priority]}`}>
                       {lead.priority}
