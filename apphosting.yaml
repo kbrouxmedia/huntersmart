@@ -23,7 +23,7 @@ env:
     value: huntersmart-8120d.firebasestorage.app
 
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-    value: huntersmart-8120d
+    value: "49188876443"
 
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
     value: "1:49188876443:web:031e05d2c21b8ffbf5163e"
