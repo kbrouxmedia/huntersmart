@@ -1,0 +1,31 @@
+runConfig:
+  cpu: 1
+  memoryMiB: 512
+  concurrency: 80
+  minInstances: 0
+  maxInstances: 10
+
+env:
+  - variable: ANTHROPIC_API_KEY
+    secret: ANTHROPIC_API_KEY
+
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: AIzaSyDKPSkL4IYKjYCUcjFpRqdbzDO6Wt28pqw
+
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: huntersmart-8120d.firebaseapp.com
+
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: huntersmart-8120d
+
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: huntersmart-8120d.firebasestorage.app
+
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: huntersmart-8120d
+
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:49188876443:web:031e05d2c21b8ffbf5163e"
+
+  - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+    value: G-SXYFFSK2CD
