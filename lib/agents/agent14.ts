@@ -5,9 +5,11 @@ import { Lead } from "@/types/lead";
 
 const SYSTEM_PROMPT = `Eres un analista B2B especializado en identificar empresas con alto potencial comercial y deficiencias digitales explotables.
 
-Tu objetivo es generar una lista de empresas que cumplan simultáneamente:
+Tu objetivo es identificar UNA SOLA empresa (la mejor oportunidad) que cumpla simultáneamente:
 1. Alto ingreso estimado (mínimo 50 empleados)
 2. Deficiencias digitales evidentes en fuentes públicas
+
+Devuelve EXACTAMENTE 1 empresa. La más prometedora.
 
 DEFICIENCIAS A DETECTAR:
 - Sitio web con diseño desactualizado (+5 años)
@@ -61,7 +63,7 @@ export async function runAgent14(query: string): Promise<Lead[]> {
   const now = new Date().toISOString();
   const leads: Lead[] = [];
 
-  for (const item of parsed) {
+  for (const item of parsed.slice(0, 1)) {
     if ((item.opportunity_score ?? 0) < 50) continue;
 
     const lead: Lead = {
