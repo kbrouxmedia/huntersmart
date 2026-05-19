@@ -14,5 +14,9 @@ export async function runAgent(systemPrompt: string, userMessage: string): Promi
 
   const block = response.content[0];
   if (block.type !== "text") throw new Error("Unexpected response type from Claude");
-  return block.text;
+  return stripMarkdownJson(block.text);
+}
+
+function stripMarkdownJson(text: string): string {
+  return text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
 }
