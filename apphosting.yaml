@@ -1,9 +1,10 @@
 runConfig:
-  cpu: 1
-  memoryMiB: 512
+  cpu: 2
+  memoryMiB: 1024
   concurrency: 80
   minInstances: 0
   maxInstances: 10
+  timeoutSeconds: 300
 
 env:
   - variable: ANTHROPIC_API_KEY

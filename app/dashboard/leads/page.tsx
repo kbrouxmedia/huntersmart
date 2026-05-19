@@ -87,21 +87,40 @@ export default function LeadsPage() {
     if (!searchQuery.trim() || searchingCity) return;
     setError("");
     setSuccess("");
-    setSearchingCity(searchQuery);
-    const prompt = `Encuentra empresas con alto ingreso y deficiencias digitales evidentes en ${searchQuery}. Analiza todos los sectores de alto valor: construcción, manufactura, servicios profesionales, salud, logística, tecnología, retail B2B. Mínimo 50 empleados. Prioriza empresas con múltiples deficiencias digitales y alto potencial de modernización.`;
+    const city = searchQuery;
+    setSearchingCity(city);
+    const prompt = `Encuentra empresas con alto ingreso y deficiencias digitales evidentes en ${city}. Analiza todos los sectores de alto valor: construcción, manufactura, servicios profesionales, salud, logística, tecnología, retail B2B. Mínimo 50 empleados. Prioriza empresas con múltiples deficiencias digitales y alto potencial de modernización.`;
     try {
       const res = await fetch("/api/agents/agent14", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: prompt }),
       });
-      const data = await res.json();
-      if (!data.success) {
-        setError(data.error);
-      } else {
-        setSuccess(`${data.count} leads encontrados en ${searchQuery}`);
-        setSearchQuery("");
-        setTimeout(() => setSuccess(""), 5000);
+
+      if (!res.body) throw new Error("Sin respuesta del servidor");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const text = decoder.decode(value);
+        const lines = text.split("\n").filter((l) => l.startsWith("data: "));
+        for (const line of lines) {
+          const payload = line.replace("data: ", "").trim();
+          if (payload === "searching") continue;
+          try {
+            const data = JSON.parse(payload);
+            if (!data.success) {
+              setError(data.error);
+            } else {
+              setSuccess(`${data.count} leads encontrados en ${city}`);
+              setSearchQuery("");
+              setTimeout(() => setSuccess(""), 5000);
+            }
+          } catch { /* ignore partial chunks */ }
+        }
       }
     } catch {
       setError("Error de conexión con el servidor.");
