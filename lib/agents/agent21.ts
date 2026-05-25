@@ -1,6 +1,6 @@
 import { db } from "@/lib/firebase";
 import { runAgent } from "@/lib/claude";
-import { collection, addDoc, updateDoc, doc } from "firebase/firestore";
+import { updateDoc, doc, setDoc } from "firebase/firestore";
 import { Lead, Audit } from "@/types/lead";
 import { Agency } from "@/types/agency";
 import { Outreach, OutreachMessage } from "@/types/outreach";
@@ -74,12 +74,12 @@ export async function runAgent21(lead: Lead, audit: Audit, agency: Agency): Prom
     created_at: new Date().toISOString(),
   };
 
-  const ref = await addDoc(collection(db, "outreach"), outreach);
+  await setDoc(doc(db, "outreach", lead.id!), outreach);
 
   await updateDoc(doc(db, "leads", lead.id!), {
     status: "OUTREACH_ACTIVE",
     updated_at: new Date().toISOString(),
   });
 
-  return { ...outreach, id: ref.id };
+  return { ...outreach, id: lead.id };
 }

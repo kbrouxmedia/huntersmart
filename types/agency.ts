@@ -2,6 +2,7 @@ export type AgencyTier = "TIER1" | "TIER2" | "TIER3";
 
 export interface Agency {
   id?: string;
+  lead_id?: string;
   agency_name: string;
   website: string;
   location: string;
@@ -13,3 +14,4 @@ export interface Agency {
   crm_status: string;
   created_at: string;
 }
+

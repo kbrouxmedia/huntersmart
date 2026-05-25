@@ -62,6 +62,7 @@ export async function runAgent20(lead: Lead, audit: Audit): Promise<Agency[]> {
 
   for (const item of parsed.slice(0, 5)) {
     const agency: Agency = {
+      lead_id: lead.id,
       agency_name: item.agency_name,
       website: item.website,
       location: item.location,
