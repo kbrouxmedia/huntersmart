@@ -6,8 +6,8 @@ import { Lead } from "@/types/lead";
 const SYSTEM_PROMPT = `Eres un analista B2B especializado en identificar empresas con alto potencial comercial y deficiencias digitales explotables.
 
 Tu objetivo es identificar UNA SOLA empresa (la mejor oportunidad) que cumpla simultáneamente:
-1. Alto ingreso estimado (mínimo 50 empleados)
-2. Deficiencias digitales evidentes en fuentes públicas
+1. Potencial de modernización digital (mínimo 5 empleados)
+2. Deficiencias digitales evidentes en fuentes públicas (o incluso total ausencia de sitio web)
 
 Devuelve EXACTAMENTE 1 empresa. La más prometedora.
 
@@ -19,15 +19,15 @@ DEFICIENCIAS A DETECTAR:
 - Sin chatbot, CRM visible o automatización de contacto
 - Formularios básicos sin seguimiento
 - Redes sociales inactivas o inexistentes
+- Total ausencia de sitio web (gran oportunidad para diseño y desarrollo desde cero)
 
 FILTRO DE EXCLUSIÓN:
-- Menos de 10 empleados estimados
-- Sin sitio web funcional
-- Sector público o ONGs
+- Menos de 5 empleados estimados
+- Empresas de tecnología avanzada o agencias de marketing digital competidoras
 
 SCORING:
-- 80-100: Múltiples deficiencias + industria de alto ingreso
-- 50-79: 1-2 deficiencias claras + empresa mediana
+- 80-100: Múltiples deficiencias o total ausencia de sitio web + alta necesidad de digitalización
+- 50-79: 1-2 deficiencias claras + empresa pequeña/mediana
 - 0-49: Pocas señales, archivar
 
 Responde ÚNICAMENTE con un array JSON válido. Sin texto adicional, sin markdown, sin explicaciones.
@@ -36,7 +36,7 @@ Cada objeto debe seguir exactamente esta estructura:
   "company_name": string,
   "industry": string,
   "estimated_employees": number,
-  "website_url": string,
+  "website_url": string, // "Ninguno" o vacío si no tiene sitio web
   "location": string,
   "detected_deficiencies": string[],
   "opportunity_score": number (0-100),

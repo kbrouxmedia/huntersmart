@@ -179,7 +179,7 @@ export default function LeadsPage() {
     setSuccess("");
     const city = searchQuery;
     setSearchingCity(city);
-    const prompt = `Encuentra empresas con alto ingreso y deficiencias digitales evidentes en ${city}. Analiza todos los sectores de alto valor: construcción, manufactura, servicios profesionales, salud, logística, tecnología, retail B2B. Mínimo 50 empleados. Prioriza empresas con múltiples deficiencias digitales y alto potencial de modernización.`;
+    const prompt = `Encuentra empresas con deficiencias digitales evidentes en ${city}. Analiza todos los sectores (incluyendo construcción, manufactura, servicios profesionales, salud, logística, tecnología, comercio, retail B2B, ONGs, sector público). Mínimo 5 empleados. Prioriza empresas con múltiples deficiencias digitales, ausencia total de sitio web o alto potencial de modernización.`;
     
     try {
       const res = await fetch("/api/agents/agent14", {
